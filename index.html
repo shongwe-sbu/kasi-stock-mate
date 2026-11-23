@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kasi Stock Mate</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="topbar">
@@ -12,26 +12,24 @@
       <h1>Kasi Stock Mate</h1>
       <p class="subtitle">Counter Stock &amp; Order Tracker</p>
     </div>
-    <p class="role-hint">Test Roles: Customer · Staff · Owner</p>
+    <p class="role-hint">Roles: Staff · Owner</p>
   </header>
 
   <nav class="tabs" aria-label="Role Views">
-    <button id="tab-customer" class="tab-btn active" data-view="customer-view">
-      Customer / Order
-    </button>
-    <button id="tab-staff" class="tab-btn" data-view="staff-view">
-      Staff / Kitchen
+    <button id="tab-staff" class="tab-btn active" data-view="staff-view">
+      1. Staff (Orders &amp; Kitchen)
     </button>
     <button id="tab-owner" class="tab-btn" data-view="owner-view">
-      Owner / Counter Stock
+      2. Owner (Counter Stock)
     </button>
   </nav>
 
   <main class="container">
-    <!-- CUSTOMER / ORDER VIEW -->
-    <section id="customer-view" class="view-section active">
-      <h2>Place Order</h2>
-      <p class="hint">Select menu items to build an order.</p>
+    <section id="staff-view" class="view-section active">
+      <h2>New Customer Order</h2>
+      <p class="hint">
+        Select items the customer asks for to load the order onto the system.
+      </p>
 
       <div id="menu-list" class="menu-grid"></div>
 
@@ -45,20 +43,18 @@
         </button>
         <p id="order-feedback" class="feedback" aria-live="polite"></p>
       </aside>
-    </section>
 
-    <!-- STAFF / KITCHEN VIEW -->
-    <section id="staff-view" class="view-section">
-      <h2>Active Orders</h2>
-      <p class="hint">
-        Completing an order updates used stock and remaining counter stock.
-      </p>
-      <div id="active-orders-list" class="orders-list">
-        <p class="empty-state">No active orders.</p>
+      <div class="kitchen-queue">
+        <h3>Active Kitchen Orders</h3>
+        <p class="hint">
+          Completing an order updates used stock and remaining counter stock.
+        </p>
+        <div id="active-orders-list" class="orders-list">
+          <p class="empty-state">No active orders.</p>
+        </div>
       </div>
     </section>
-
-    <!-- OWNER / COUNTER STOCK VIEW -->
+    
     <section id="owner-view" class="view-section">
       <h2>Counter Stock</h2>
       <p class="hint">

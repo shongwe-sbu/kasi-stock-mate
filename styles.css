@@ -58,3 +58,71 @@ body {
   color: white;
   border-color: darkslategray;
 }
+
+.container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 16px 32px;
+}
+
+.view-section {
+  display: none;
+  background-color: white;
+  border: 1px solid silver;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.view-section.active {
+  display: block;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.menu-card,
+.order-card {
+  border: 1px solid silver;
+  border-radius: 6px;
+  padding: 12px;
+  background-color: floralwhite;
+  margin-bottom: 12px;
+}
+
+.order-box {
+  border-top: 1px solid silver;
+  padding-top: 16px;
+}
+
+.order-items {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+}
+
+.primary-btn,
+.secondary-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.primary-btn {
+  background-color: orange;
+  color: white;
+}
+
+.primary-btn:hover {
+  background-color: green;
+}
+
+.secondary-btn {
+  background-color: gainsboro;
+  color: darkslategray;
+}

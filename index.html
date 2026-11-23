@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kasi Stock Mate</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Kasi Stock Mate</h1>
+      <p class="subtitle">Counter Stock &amp; Order Tracker</p>
+    </div>
+    <p class="role-hint">Test Roles: Customer · Staff · Owner</p>
+  </header>
+
+  <nav class="tabs" aria-label="Role Views">
+    <button id="tab-customer" class="tab-btn active" data-view="customer-view">
+      Customer / Order
+    </button>
+    <button id="tab-staff" class="tab-btn" data-view="staff-view">
+      Staff / Kitchen
+    </button>
+    <button id="tab-owner" class="tab-btn" data-view="owner-view">
+      Owner / Counter Stock
+    </button>
+  </nav>
+
+  <main class="container">
+    <!-- CUSTOMER / ORDER VIEW -->
+    <section id="customer-view" class="view-section active">
+      <h2>Place Order</h2>
+      <p class="hint">Select menu items to build an order.</p>
+
+      <div id="menu-list" class="menu-grid"></div>
+
+      <aside class="order-box">
+        <h3>Current Order</h3>
+        <ul id="current-order-list" class="order-items">
+          <li class="empty-state">No items selected yet.</li>
+        </ul>
+        <button id="place-order-btn" class="primary-btn" type="button">
+          Send Order to Kitchen
+        </button>
+        <p id="order-feedback" class="feedback" aria-live="polite"></p>
+      </aside>
+    </section>
+
+    <!-- STAFF / KITCHEN VIEW -->
+    <section id="staff-view" class="view-section">
+      <h2>Active Orders</h2>
+      <p class="hint">
+        Completing an order updates used stock and remaining counter stock.
+      </p>
+      <div id="active-orders-list" class="orders-list">
+        <p class="empty-state">No active orders.</p>
+      </div>
+    </section>
+
+    <!-- OWNER / COUNTER STOCK VIEW -->
+    <section id="owner-view" class="view-section">
+      <h2>Counter Stock</h2>
+      <p class="hint">
+        Track morning stock, how much has been used, and what remains in the counter.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ingredient</th>
+              <th>Opening</th>
+              <th>Used</th>
+              <th>Remaining in Counter</th>
+            </tr>
+          </thead>
+          <tbody id="stock-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

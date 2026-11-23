@@ -101,3 +101,68 @@ function setupTabs() {
 }
 
 setupTabs();
+
+function renderStockTable() {
+  const tableBody = document.getElementById("stock-table-body");
+  tableBody.innerHTML = "";
+
+  for (const key in stock) {
+    const item = stock[key];
+    const row = document.createElement("tr");
+
+    if (item.remaining <= 5) {
+      row.classList.add("low-stock");
+    }
+
+    const nameCell = document.createElement("td");
+    nameCell.textContent = item.label;
+
+    const openingCell = document.createElement("td");
+    openingCell.textContent = item.opening;
+
+    const usedCell = document.createElement("td");
+    usedCell.textContent = item.used;
+
+    const remainingCell = document.createElement("td");
+    remainingCell.textContent = item.remaining;
+
+    const actionCell = document.createElement("td");
+
+    const qtyInput = document.createElement("input");
+    qtyInput.type = "number";
+    qtyInput.min = "1";
+    qtyInput.placeholder = "Qty";
+
+    const addButton = document.createElement("button");
+    addButton.type = "button";
+    addButton.className = "secondary-btn";
+    addButton.textContent = "Add";
+
+    // Attach the click listener directly to this row's button
+    addButton.addEventListener("click", function () {
+      const amount = Number(qtyInput.value);
+
+      if (isNaN(amount) || amount <= 0) {
+        return;
+      }
+
+      item.opening = item.opening + amount;
+      item.remaining = item.opening - item.used;
+      qtyInput.value = "";
+      renderStockTable();
+    });
+
+    actionCell.appendChild(qtyInput);
+    actionCell.appendChild(addButton);
+
+    row.appendChild(nameCell);
+    row.appendChild(openingCell);
+    row.appendChild(usedCell);
+    row.appendChild(remainingCell);
+    row.appendChild(actionCell);
+
+    tableBody.appendChild(row);
+  }
+}
+
+renderStockTable();

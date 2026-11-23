@@ -126,3 +126,53 @@ body {
   background-color: gainsboro;
   color: darkslategray;
 }
+
+.kitchen-queue {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid silver;
+}
+
+.fryer-banner {
+  background-color: mistyrose;
+  border-left: 4px solid orangered;
+  padding: 8px 12px;
+  margin: 8px 0 12px;
+  font-weight: bold;
+  color: darkred;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  border: 1px solid silver;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+th {
+  background-color: gainsboro;
+  color: darkslategray;
+}
+
+tr.low-stock {
+  background-color: lemonchiffon;
+}
+
+.empty-state {
+  color: gray;
+  font-style: italic;
+}
+
+.feedback {
+  min-height: 20px;
+  font-weight: bold;
+  color: crimson;
+}

@@ -138,7 +138,6 @@ function renderStockTable() {
     addButton.className = "secondary-btn";
     addButton.textContent = "Add";
 
-    // Attach the click listener directly to this row's button
     addButton.addEventListener("click", function () {
       const amount = Number(qtyInput.value);
 
@@ -166,3 +165,38 @@ function renderStockTable() {
 }
 
 renderStockTable();
+
+const currentOrder = [];
+
+function renderMenu() {
+  const menuGrid = document.getElementById("menu-list");
+  menuGrid.innerHTML = "";
+
+  for (let i = 0; i < menuItems.length; i++) {
+    const item = menuItems[i];
+
+    const card = document.createElement("div");
+    card.className = "menu-card";
+
+    const title = document.createElement("h3");
+    title.textContent = item.name;
+
+    const price = document.createElement("p");
+    price.textContent = "R" + item.price;
+
+    const fryerTag = document.createElement("small");
+    if (item.needsFryer) {
+      fryerTag.textContent = "Uses Fryer";
+    } else {
+      fryerTag.textContent = "No Fryer";
+    }
+
+    card.appendChild(title);
+    card.appendChild(price);
+    card.appendChild(fryerTag);
+
+    menuGrid.appendChild(card);
+  }
+}
+
+renderMenu();

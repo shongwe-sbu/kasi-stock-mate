@@ -99,7 +99,6 @@ function setupTabs() {
     });
   });
 }
-
 setupTabs();
 
 function renderStockTable() {
@@ -163,7 +162,6 @@ function renderStockTable() {
     tableBody.appendChild(row);
   }
 }
-
 renderStockTable();
 
 const currentOrder = [];
@@ -195,8 +193,47 @@ function renderMenu() {
     card.appendChild(price);
     card.appendChild(fryerTag);
 
+    card.addEventListener("click", function () {
+      currentOrder.push(item);
+      renderCurrentOrder();
+    });
+
     menuGrid.appendChild(card);
   }
 }
-
 renderMenu();
+
+function renderCurrentOrder() {
+  const orderList = document.getElementById("current-order-list");
+  orderList.innerHTML = "";
+
+  if (currentOrder.length === 0) {
+    const emptyItem = document.createElement("li");
+    emptyItem.className = "empty-state";
+    emptyItem.textContent = "No items selected yet.";
+    orderList.appendChild(emptyItem);
+    return;
+  }
+
+  for (let i = 0; i < currentOrder.length; i++) {
+    const item = currentOrder[i];
+
+    const listItem = document.createElement("li");
+    listItem.textContent = item.name + " - R" + item.price + " ";
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "secondary-btn";
+    removeBtn.textContent = "Remove";
+
+    removeBtn.addEventListener("click", function () {
+      currentOrder.splice(i, 1);
+      renderCurrentOrder();
+    });
+
+    listItem.appendChild(removeBtn);
+    orderList.appendChild(listItem);
+  }
+}
+renderCurrentOrder();
+

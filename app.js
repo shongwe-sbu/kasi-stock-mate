@@ -237,3 +237,235 @@ function renderCurrentOrder() {
 }
 renderCurrentOrder();
 
+const activeOrders = [];
+let orderNumber = 1;
+
+function getNeededIngredients(orderItems) {
+  const needed = {};
+
+  for (let i = 0; i < orderItems.length; i++) {
+    const item = orderItems[i];
+    for (const ingKey in item.ingredients) {
+      const qty = item.ingredients[ingKey];
+      if (!needed[ingKey]) {
+        needed[ingKey] = 0;
+      }
+      needed[ingKey] = needed[ingKey] + qty;
+    }
+  }
+
+  return needed;
+}
+
+function renderActiveOrders() {
+  const ordersContainer = document.getElementById("active-orders-list");
+  ordersContainer.innerHTML = "";
+
+  if (activeOrders.length === 0) {
+    const emptyMsg = document.createElement("p");
+    emptyMsg.className = "empty-state";
+    emptyMsg.textContent = "No active orders.";
+    ordersContainer.appendChild(emptyMsg);
+    return;
+  }
+
+  for (let i = 0; i < activeOrders.length; i++) {
+    const order = activeOrders[i];
+
+    const card = document.createElement("div");
+    card.className = "order-card";
+
+    const heading = document.createElement("h4");
+    heading.textContent = "Order #" + order.number + " — R" + order.total;
+    card.appendChild(heading);
+
+    if (order.hasFryer) {
+      const banner = document.createElement("div");
+      banner.className = "fryer-banner";
+      banner.textContent = "Fryer Needed";
+      card.appendChild(banner);
+    }
+
+    const itemsList = document.createElement("ul");
+    for (let j = 0; j < order.items.length; j++) {
+      const li = document.createElement("li");
+      li.textContent = order.items[j].name + " (R" + order.items[j].price + ")";
+      itemsList.appendChild(li);
+    }
+    card.appendChild(itemsList);
+
+    const completeBtn = document.createElement("button");
+    completeBtn.type = "button";
+    completeBtn.className = "primary-btn";
+    completeBtn.textContent = "Complete Order";
+
+    completeBtn.addEventListener("click", function () {
+      for (const ingKey in order.needed) {
+        const usedQty = order.needed[ingKey];
+        stock[ingKey].used = stock[ingKey].used + usedQty;
+        stock[ingKey].remaining = stock[ingKey].opening - stock[ingKey].used;
+      }
+
+      activeOrders.splice(i, 1);
+      renderActiveOrders();
+      renderStockTable();
+    });
+
+    card.appendChild(completeBtn);
+    ordersContainer.appendChild(card);
+  }
+}
+
+function setupPlaceOrder() {
+  const placeBtn = document.getElementById("place-order-btn");
+  const feedback = document.getElementById("order-feedback");
+
+  placeBtn.addEventListener("click", function () {
+    feedback.textContent = "";
+
+    if (currentOrder.length === 0) {
+      feedback.textContent = "Select at least one menu item first.";
+      return;
+    }
+
+    const needed = getNeededIngredients(currentOrder);
+
+    for (const ingKey in needed) {
+      const requiredQty = needed[ingKey];
+      const availableQty = stock[ingKey].remaining;
+
+      if (availableQty < requiredQty) {
+        feedback.textContent =
+          "Not enough " +
+          stock[ingKey].label +
+          " in counter (need " +
+          requiredQty +
+          ", have " +
+          availableQty +
+          ").";
+        return;
+      }
+    }
+
+    let total = 0;
+    let hasFryer = false;
+    const copiedItems = [];
+
+    for (let i = 0; i < currentOrder.length; i++) {
+      const item = currentOrder[i];
+      total = total + item.price;
+      if (item.needsFryer) {
+        hasFryer = true;
+      }
+      copiedItems.push(item);
+    }
+
+    activeOrders.push({
+      number: orderNumber,
+      items: copiedItems,
+      total: total,
+      hasFryer: hasFryer,
+      needed: needed
+    });
+
+    orderNumber = orderNumber + 1;
+    currentOrder.length = 0;
+
+    renderCurrentOrder();
+    renderActiveOrders();
+  });
+}
+
+renderActiveOrders();
+setupPlaceOrder();
+
+let isOwnerLoggedIn = false;
+const OWNER_LOGIN_PIN = "1234";
+
+function setupOwnerLogin() {
+  const ownerSection = document.getElementById("owner-view");
+  const ownerTabBtn = document.getElementById("tab-owner");
+  const tableWrap = ownerSection.querySelector(".table-wrap");
+
+  const loginBox = document.createElement("div");
+  loginBox.id = "owner-login-box";
+  loginBox.className = "login-box";
+
+  const heading = document.createElement("h3");
+  heading.textContent = "Owner Login";
+
+  const instructions = document.createElement("p");
+  instructions.textContent = "Log in with your owner PIN to manage counter stock and view sales.";
+
+  const pinInput = document.createElement("input");
+  pinInput.type = "password";
+  pinInput.placeholder = "Enter Owner PIN";
+
+  const loginBtn = document.createElement("button");
+  loginBtn.type = "button";
+  loginBtn.className = "primary-btn";
+  loginBtn.textContent = "Log In";
+
+  const statusMsg = document.createElement("p");
+  statusMsg.className = "feedback";
+
+  const logoutBtn = document.createElement("button");
+  logoutBtn.type = "button";
+  logoutBtn.className = "secondary-btn logout-btn";
+  logoutBtn.textContent = "Log Out";
+
+  const salesPanel = document.createElement("div");
+  salesPanel.id = "owner-sales-panel";
+  salesPanel.className = "sales-panel";
+  salesPanel.innerHTML = "<h3>Completed Orders (Sold Today)</h3><div id='sales-list'><p class='empty-state'>No completed orders loaded yet.</p></div>";
+
+  function refreshOwnerView() {
+    if (isOwnerLoggedIn) {
+      loginBox.style.display = "none";
+      logoutBtn.style.display = "inline-block";
+      tableWrap.style.display = "block";
+      salesPanel.style.display = "block";
+      //loadCompletedOrdersFromDb();
+    } else {
+      loginBox.style.display = "block";
+      logoutBtn.style.display = "none";
+      tableWrap.style.display = "none";
+      salesPanel.style.display = "none";
+      pinInput.value = "";
+      statusMsg.textContent = "";
+    }
+  }
+
+  loginBtn.addEventListener("click", function () {
+    if (pinInput.value === OWNER_LOGIN_PIN) {
+      isOwnerLoggedIn = true;
+      statusMsg.textContent = "";
+      refreshOwnerView();
+    } else {
+      statusMsg.textContent = "Wrong owner PIN. Only the shop owner can access this page.";
+    }
+  });
+
+  logoutBtn.addEventListener("click", function () {
+    isOwnerLoggedIn = false;
+    refreshOwnerView();
+  });
+
+  ownerTabBtn.addEventListener("click", function () {
+    refreshOwnerView();
+  });
+
+  loginBox.appendChild(heading);
+  loginBox.appendChild(instructions);
+  loginBox.appendChild(pinInput);
+  loginBox.appendChild(loginBtn);
+  loginBox.appendChild(statusMsg);
+
+  ownerSection.insertBefore(loginBox, tableWrap);
+  ownerSection.insertBefore(logoutBtn, tableWrap);
+  ownerSection.appendChild(salesPanel);
+
+  refreshOwnerView();
+}
+
+setupOwnerLogin

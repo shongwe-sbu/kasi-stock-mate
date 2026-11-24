@@ -176,3 +176,28 @@ tr.low-stock {
   font-weight: bold;
   color: crimson;
 }
+
+.login-box {
+  border: 1px solid silver;
+  border-radius: 6px;
+  padding: 16px;
+  background-color: floralwhite;
+  margin-bottom: 16px;
+}
+
+.login-box input {
+  padding: 8px 10px;
+  margin-right: 8px;
+  border: 1px solid silver;
+  border-radius: 5px;
+}
+
+.logout-btn {
+  margin-bottom: 14px;
+}
+
+.sales-panel {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid silver;
+}

@@ -1,3 +1,10 @@
+const FIREBASE_PROJECT_ID = "kasi-stock-mate";
+const FIREBASE_API_KEY = "AIzaSyDBuoCSg-QbyZ3NT5qC-TW6ey3fotSJVUA";
+const FIRESTORE_BASE_URL =
+  "https://firestore.googleapis.com/v1/projects/" +
+  FIREBASE_PROJECT_ID +
+  "/databases/(default)/documents";
+
 const stock = {
   loaves: { label: "Quarter Loaves", opening: 0, used: 0, remaining: 0 },
   chips: { label: "Chips Portions", opening: 0, used: 0, remaining: 0 },
@@ -83,6 +90,222 @@ const menuItems = [
   }
 ];
 
+function withApiKey(url) {
+  return url + "?key=" + encodeURIComponent(FIREBASE_API_KEY);
+}
+
+function toFirestoreField(value) {
+  if (typeof value === "boolean") {
+    return { booleanValue: value };
+  }
+  if (typeof value === "number") {
+    return Number.isInteger(value)
+      ? { integerValue: String(value) }
+      : { doubleValue: value };
+  }
+  if (Array.isArray(value)) {
+    const arr = [];
+    for (let i = 0; i < value.length; i++) {
+      arr.push(toFirestoreField(value[i]));
+    }
+    return { arrayValue: { values: arr } };
+  }
+  if (value && typeof value === "object") {
+    const fields = {};
+    for (const k in value) {
+      fields[k] = toFirestoreField(value[k]);
+    }
+    return { mapValue: { fields: fields } };
+  }
+  return { stringValue: String(value) };
+}
+
+function fromFirestoreField(field) {
+  if (!field) return null;
+  if ("stringValue" in field) return field.stringValue;
+  if ("integerValue" in field) return Number(field.integerValue);
+  if ("doubleValue" in field) return Number(field.doubleValue);
+  if ("booleanValue" in field) return field.booleanValue;
+  if ("arrayValue" in field) {
+    const rawValues = field.arrayValue.values || [];
+    const out = [];
+    for (let i = 0; i < rawValues.length; i++) {
+      out.push(fromFirestoreField(rawValues[i]));
+    }
+    return out;
+  }
+  if ("mapValue" in field) {
+    const rawFields = field.mapValue.fields || {};
+    const obj = {};
+    for (const k in rawFields) {
+      obj[k] = fromFirestoreField(rawFields[k]);
+    }
+    return obj;
+  }
+  return null;
+}
+
+function saveStockToFirestore(key) {
+  const item = stock[key];
+  if (!item) return;
+
+  const docUrl = withApiKey(
+    FIRESTORE_BASE_URL + "/counter_stock/" + encodeURIComponent(key)
+  );
+
+  fetch(docUrl, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fields: {
+        label: toFirestoreField(item.label),
+        opening: toFirestoreField(item.opening),
+        used: toFirestoreField(item.used),
+        remaining: toFirestoreField(item.remaining)
+      }
+    })
+  }).catch(function (err) {
+    console.log("Error saving stock to Firestore:", err);
+  });
+}
+
+function loadStockFromFirestore() {
+  const listUrl = withApiKey(FIRESTORE_BASE_URL + "/counter_stock");
+
+  fetch(listUrl)
+    .then(function (res) {
+      return res.json();
+    })
+    .then(function (data) {
+      const docs = data.documents || [];
+
+      if (docs.length === 0) {
+        for (const key in stock) {
+          saveStockToFirestore(key);
+        }
+        return;
+      }
+
+      for (let i = 0; i < docs.length; i++) {
+        const doc = docs[i];
+        const parts = doc.name.split("/");
+        const docKey = parts[parts.length - 1];
+        const fields = doc.fields || {};
+
+        if (stock[docKey]) {
+          stock[docKey].label = fromFirestoreField(fields.label) || stock[docKey].label;
+          stock[docKey].opening = Number(fromFirestoreField(fields.opening) || 0);
+          stock[docKey].used = Number(fromFirestoreField(fields.used) || 0);
+          stock[docKey].remaining = Number(fromFirestoreField(fields.remaining) || 0);
+        }
+      }
+
+      renderStockTable();
+    })
+    .catch(function (err) {
+      console.log("Error loading stock from Firestore:", err);
+    });
+}
+
+function renderCompletedOrders(orders) {
+  const salesList = document.getElementById("sales-list");
+  salesList.innerHTML = "";
+
+  if (!Array.isArray(orders) || orders.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "No completed orders saved yet.";
+    salesList.appendChild(empty);
+    return;
+  }
+
+  let totalRevenue = 0;
+
+  for (let i = 0; i < orders.length; i++) {
+    const order = orders[i];
+    totalRevenue = totalRevenue + Number(order.total || 0);
+
+    const card = document.createElement("div");
+    card.className = "order-card";
+
+    const title = document.createElement("h4");
+    title.textContent = "Order #" + order.orderNumber + " — R" + order.total;
+
+    const itemsText = document.createElement("p");
+    const itemsArray = Array.isArray(order.items) ? order.items : [];
+    itemsText.textContent = "Sold: " + itemsArray.join(", ");
+
+    card.appendChild(title);
+    card.appendChild(itemsText);
+    salesList.appendChild(card);
+  }
+
+  const summary = document.createElement("p");
+  summary.innerHTML = "<strong>Total Recorded Sales: R" + totalRevenue + "</strong>";
+  salesList.insertBefore(summary, salesList.firstChild);
+}
+
+function loadCompletedOrdersFromFirestore() {
+  const ordersUrl = withApiKey(FIRESTORE_BASE_URL + "/completed_orders");
+
+  fetch(ordersUrl)
+    .then(function (res) {
+      return res.json();
+    })
+    .then(function (data) {
+      const docs = data.documents || [];
+      const orders = [];
+
+      for (let i = 0; i < docs.length; i++) {
+        const f = docs[i].fields || {};
+        orders.push({
+          orderNumber: fromFirestoreField(f.orderNumber),
+          items: fromFirestoreField(f.items) || [],
+          total: fromFirestoreField(f.total) || 0,
+          hasFryer: Boolean(fromFirestoreField(f.hasFryer))
+        });
+      }
+
+      orders.reverse();
+      renderCompletedOrders(orders);
+    })
+    .catch(function (err) {
+      console.log("Error loading completed orders:", err);
+    });
+}
+
+function saveCompletedOrderToFirestore(order) {
+  const soldItemNames = [];
+  for (let i = 0; i < order.items.length; i++) {
+    soldItemNames.push(order.items[i].name);
+  }
+
+  const createOrderUrl = withApiKey(FIRESTORE_BASE_URL + "/completed_orders");
+
+  fetch(createOrderUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      fields: {
+        orderNumber: toFirestoreField(order.number),
+        items: toFirestoreField(soldItemNames),
+        total: toFirestoreField(order.total),
+        hasFryer: toFirestoreField(order.hasFryer),
+        ingredientsUsed: toFirestoreField(order.needed),
+        completedAt: toFirestoreField(new Date().toISOString())
+      }
+    })
+  })
+    .then(function () {
+      if (isOwnerLoggedIn) {
+        loadCompletedOrdersFromFirestore();
+      }
+    })
+    .catch(function (err) {
+      console.log("Error saving completed order:", err);
+    });
+}
+
 function setupTabs() {
   const buttons = document.querySelectorAll(".tab-btn");
   const sections = document.querySelectorAll(".view-section");
@@ -148,6 +371,7 @@ function renderStockTable() {
       item.remaining = item.opening - item.used;
       qtyInput.value = "";
       renderStockTable();
+      saveStockToFirestore(key);
     });
 
     actionCell.appendChild(qtyInput);
@@ -304,9 +528,11 @@ function renderActiveOrders() {
         const usedQty = order.needed[ingKey];
         stock[ingKey].used = stock[ingKey].used + usedQty;
         stock[ingKey].remaining = stock[ingKey].opening - stock[ingKey].used;
+        saveStockToFirestore(ingKey);
       }
 
       activeOrders.splice(i, 1);
+      saveCompletedOrderToFirestore(order);
       renderActiveOrders();
       renderStockTable();
     });
@@ -417,7 +643,8 @@ function setupOwnerLogin() {
   const salesPanel = document.createElement("div");
   salesPanel.id = "owner-sales-panel";
   salesPanel.className = "sales-panel";
-  salesPanel.innerHTML = "<h3>Completed Orders (Sold Today)</h3><div id='sales-list'><p class='empty-state'>No completed orders loaded yet.</p></div>";
+  salesPanel.innerHTML =
+    "<h3>Completed Orders (Sold Today)</h3><div id='sales-list'><p class='empty-state'>No completed orders loaded yet.</p></div>";
 
   function refreshOwnerView() {
     if (isOwnerLoggedIn) {
@@ -425,7 +652,7 @@ function setupOwnerLogin() {
       logoutBtn.style.display = "inline-block";
       tableWrap.style.display = "block";
       salesPanel.style.display = "block";
-      //loadCompletedOrdersFromDb();
+      loadCompletedOrdersFromFirestore();
     } else {
       loginBox.style.display = "block";
       logoutBtn.style.display = "none";
@@ -468,4 +695,5 @@ function setupOwnerLogin() {
   refreshOwnerView();
 }
 
-setupOwnerLogin
+setupOwnerLogin();
+loadStockFromFirestore();
